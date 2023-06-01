@@ -4,6 +4,8 @@ const app = express();
 require("dotenv").config();
 const db = require("./database");
 
+db.connect();
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
