@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('./partials/head'); %>
+        <title>register</title>
+        <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+    <div class="full-page" id="register-page">
+        <div class="mask-dark">
+            <div class="vcenter w-100 h-100">
+                <form method="post" id="register-form">
+                    <h1 class="text-center fw-bold mb-4">Register <i class="bi bi-journal-bookmark-fill"></i></h1>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" required id="exampleInputEmail1" aria-describedby="emailHelp">
+                    </div>
+                    <div class="mb-3">
+                        <label for="passwd" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="passwd" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="confirm-passwd" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirm-passwd" required>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" value="" id="reg-admin">
+                        <label class="form-check-label" for="reg-admin">
+                            Register as Admin
+                        </label>
+                    </div>
+
+                    <div class="mb-4" id="admin-verification">
+                        <label for="admin-passcode" class="form-label">Admin Passcode</label>
+                        <input type="password" class="form-control" id="admin-passcode">
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-dark py-2">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+<script>
+    var admin_pass_textbox = document.getElementById("admin-verification");
+    var reg_admin = document.getElementById("reg-admin");
+    admin_pass_textbox.style.display = 'none';
+
+    reg_admin.addEventListener('change', ()=>{
+        if (reg_admin.checked) admin_pass_textbox.style.display = 'block';
+        else admin_pass_textbox.style.display = 'none';
+    })
+
+
+</script>
+</html>

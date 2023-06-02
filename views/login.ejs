@@ -1,11 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <%- include('./partials/head'); %>
-    <title>login</title>
-    
+        <title>login</title>
+        <link rel="stylesheet" href="login.css">
 </head>
+
 <body>
-    Hello
+    <div class="full-page" id="login-page">
+        <div class="mask-dark">
+            <div class="vcenter w-100 h-100">
+                <form method="post">
+                    <h1 class="text-center fw-bold mb-4">Login <i class="bi bi-journal-bookmark-fill"></i></h1>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleInputPassword1" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="exampleInputPassword1">
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-dark py-2">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+    </script>
 </body>
+
 </html>

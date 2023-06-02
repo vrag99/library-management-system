@@ -1,0 +1,17 @@
+@import 'home.scss';
+
+#login-page{
+    @include fixed-bg-cover('https://source.unsplash.com/hmCMUZKLxa4')
+}
+#register-page{
+    @include fixed-bg-cover('https://source.unsplash.com/BfGuQJpDolQ')
+}
+
+form{
+    color: white;
+    padding: 2rem;
+    font-size: 1rem;
+    letter-spacing: -0.02rem;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.4);
+}
