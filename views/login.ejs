@@ -15,13 +15,19 @@
                     <h1 class="text-center fw-bold mb-4">Login <i class="bi bi-journal-bookmark-fill"></i></h1>
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+                        <input type="text" class="form-control" id="username" name="username">
                     </div>
                     <div class="mb-3">
-                        <label for="exampleInputPassword1" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="exampleInputPassword1">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password">
                     </div>
-
+                    <% if (data.error) {%>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <%= data.error %>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    aria-label="Close"></button>
+                        </div>
+                    <%} %>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-dark py-2">Submit</button>
                     </div>
@@ -30,9 +36,16 @@
         </div>
     </div>
 
-    <script>
-
-    </script>
+    <% if (data.registered) { %>
+        <script>
+            Swal.fire({
+                title: "Registered succesfully!",
+                icon: 'success',
+                showConfirmButton: false,
+                timer: 1500
+            })
+        </script>
+        <% } %>
 </body>
 
 </html>

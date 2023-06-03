@@ -15,28 +15,35 @@
                     <h1 class="text-center fw-bold mb-4">Register <i class="bi bi-journal-bookmark-fill"></i></h1>
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" required id="exampleInputEmail1" aria-describedby="emailHelp">
+                        <input type="text" class="form-control" id="username" name="username" required>
                     </div>
                     <div class="mb-3">
-                        <label for="passwd" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="passwd" required>
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password">
                     </div>
                     <div class="mb-4">
-                        <label for="confirm-passwd" class="form-label">Confirm Password</label>
-                        <input type="password" class="form-control" id="confirm-passwd" required>
+                        <label for="confirmPassword" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword">
                     </div>
 
                     <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" value="" id="reg-admin">
-                        <label class="form-check-label" for="reg-admin">
+                        <input class="form-check-input" type="checkbox" id="registerAsAdmin" name="registerAsAdmin">
+                        <label class="form-check-label" for="registerAsAdmin">
                             Register as Admin
                         </label>
                     </div>
 
-                    <div class="mb-4" id="admin-verification">
-                        <label for="admin-passcode" class="form-label">Admin Passcode</label>
-                        <input type="password" class="form-control" id="admin-passcode">
+                    <div class="mb-4" id="adminVerification">
+                        <label for="adminPasscode" class="form-label">Admin Passcode</label>
+                        <input type="password" class="form-control" id="adminPasscode" name="adminPasscode">
                     </div>
+
+                    <% if (data.error) {%>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <%= data.error %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <%} %>
 
                     <div class="d-grid">
                         <button type="submit" class="btn btn-dark py-2">Submit</button>
@@ -49,15 +56,14 @@
 </body>
 
 <script>
-    var admin_pass_textbox = document.getElementById("admin-verification");
-    var reg_admin = document.getElementById("reg-admin");
-    admin_pass_textbox.style.display = 'none';
+    var adminPassTextbox = document.getElementById("adminVerification");
+    var registerAsAdmin = document.getElementById("registerAsAdmin");
+    adminPassTextbox.style.display = 'none';
 
-    reg_admin.addEventListener('change', ()=>{
-        if (reg_admin.checked) admin_pass_textbox.style.display = 'block';
-        else admin_pass_textbox.style.display = 'none';
+    registerAsAdmin.addEventListener('change', ()=>{
+        if (registerAsAdmin.checked) adminPassTextbox.style.display = 'block';
+        else adminPassTextbox.style.display = 'none';
     })
-
 
 </script>
 </html>
