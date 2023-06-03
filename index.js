@@ -7,9 +7,12 @@ const db = require("./database");
 const bcrypt = require("bcrypt");
 const bodyParser = require('body-parser');
 const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASS = process.env.ADMIN_PASS;
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
 
 // Connect to the database
@@ -38,17 +41,40 @@ const hashPass = async (password) => {
 
 const matchPass = async (pass, salt, existingHash) => await bcrypt.hash(pass, salt) === existingHash;
 
+const sendErr = (res, code, msg) => res.status(code).json({ error: msg });
+
+const authenticate = (req, res, next) => {
+    const token = localStorage.getItem("accessToken");
+    if (token == null) sendErr(res, 401, "token not found");
+    else {
+        jwt.verify(token, ACCESS_TOKEN_SECRET, (err, user) => {
+            if (err) sendErr(res, 403, "error during validation");
+            req.user = user;
+            next();
+        })
+    }
+}
 
 // Routes
 app.get('/', function (req, res) {
     res.render('home');
 });
 
-app.get('/login', (req, res) => {
+app.get('/login', authenticate, (req, res) => {
+    if (req.user) {
+        let {username, admin} = req.user;
+        if(admin) res.redirect(`/adminDashboard/${username}`);
+        else res.redirect(`/userDashboard/${username}`);
+    };
     res.render('login', data = { registered: req.query.registered });
-})
+});
+
 app.get('/register', (req, res) => {
     res.render('register', data = {});
+});
+
+app.get('/userDashboard', authenticate, (req, res)=>{
+
 })
 
 app.post('/register', async (req, res) => {
@@ -78,23 +104,28 @@ app.post('/register', async (req, res) => {
             }
         }
     )
-
 })
+
 
 app.post('/login', async (req, res) => {
     let { username, password } = req.body;
     db.query(
         `select * from users where username=${db.escape(username)}`,
         async (err, result) => {
-            if (result.length == 0) res.render('login', data={error: "User doesn't exist"})
+            if (result.length == 0) res.render('login', data = { error: "User doesn't exist" })
             else {
                 let passMatch = await matchPass(password, result[0].salt, result[0].hash);
-                if (passMatch) res.send("Authenticated");
-                else res.render('login', data = {error: "Incorrect username or password"});
-            } 
+                if (passMatch) {
+                    let user = { name: username, admin: result.admin };
+                    const accessToken = jwt.sign(user, ACCESS_TOKEN_SECRET);
+                    localStorage.setItem("accessToken", accessToken);
+                }
+                else res.render('login', data = { error: "Incorrect username or password" });
+            }
         }
     )
-}) 
+})
+
 
 app.listen(PORT, () => {
     console.log(`The server is running on http://localhost:${PORT}`)
