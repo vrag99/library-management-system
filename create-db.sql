@@ -11,13 +11,16 @@ CREATE TABLE `users` (
 );
 
 CREATE TABLE `books` (
-    `book_id` int NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    `availability` tinyint(1) NOT NULL DEFAULT 1,
+    `id` int NOT NULL PRIMARY KEY AUTO_INCREMENT,
     `book_name` varchar(255) NOT NULL,
-    `user_id` int,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    `quantity` int NOT NULL DEFAULT 1,
 )
 
--- CREATE TABLE `requests` (
-
--- )
+CREATE TABLE `requests` (
+    `id` int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `status` ENUM('available', 'issued', 'request-issue', 'request-return') DEFAULT 'available',
+    `book_id` int NOT NULL,
+    `user_id` int NOT NULL,
+    FOREIGN KEY `book_id` REFERENCES books(id),
+    FOREIGN KEY `user_id` REFERENCES users(id)
+)
