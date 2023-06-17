@@ -8,6 +8,7 @@ const bcrypt = require("bcrypt");
 const bodyParser = require('body-parser');
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+var cookieParser = require('cookie-parser');
 
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASS = process.env.ADMIN_PASS;
@@ -28,6 +29,7 @@ app.use(express.static(__dirname + '/public/css'));
 app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
+app.use(cookieParser());
 
 
 // Hashing utitlities
@@ -43,9 +45,9 @@ const matchPass = async (pass, salt, existingHash) => await bcrypt.hash(pass, sa
 
 const sendErr = (res, code, msg) => res.status(code).json({ error: msg });
 
-const authenticate = (req, res, next) => {
-    const token = localStorage.getItem("accessToken");
-    if (token == null) sendErr(res, 401, "token not found");
+const validateJWT = (req, res, next) =>{
+    const token = req.cookies['access-token'];
+    if (token == null) res.redirect('/login');
     else {
         jwt.verify(token, ACCESS_TOKEN_SECRET, (err, user) => {
             if (err) sendErr(res, 403, "error during validation");
@@ -53,29 +55,25 @@ const authenticate = (req, res, next) => {
             next();
         })
     }
-}
+} 
 
 // Routes
-app.get('/', function (req, res) {
-    res.render('home');
+app.get('/', (req, res) => res.render('home'));
+
+
+app.get('/login', validateJWT, (req, res) => {
+    if (req.user) {res.redirect('/userDashboard');}
+    res.render('login', data = { registered: req.query.registered })
 });
 
-app.get('/login', authenticate, (req, res) => {
-    if (req.user) {
-        let {username, admin} = req.user;
-        if(admin) res.redirect(`/adminDashboard/${username}`);
-        else res.redirect(`/userDashboard/${username}`);
-    };
-    res.render('login', data = { registered: req.query.registered });
-});
 
-app.get('/register', (req, res) => {
-    res.render('register', data = {});
-});
+app.get('/register', (req, res) => res.render('register', data = {}));
 
-app.get('/userDashboard', authenticate, (req, res)=>{
 
+app.get('/userDashboard', validateJWT, (req, res)=>{
+    res.send(req.user.name);
 })
+
 
 app.post('/register', async (req, res) => {
     let { username, password, confirmPassword, adminPasscode } = req.body;
@@ -97,7 +95,9 @@ app.post('/register', async (req, res) => {
                             values(${db.escape(username)}, ${db.escape(regAsAdmin)}, ${db.escape(hash)}, ${db.escape(salt)})`,
                         (err, result) => {
                             if (err) res.json(err);
-                            else res.redirect('/login?registered=true');
+                            else {
+                                res.redirect('/login?registered=true')
+                            };
                         }
                     )
                 }
@@ -116,9 +116,13 @@ app.post('/login', async (req, res) => {
             else {
                 let passMatch = await matchPass(password, result[0].salt, result[0].hash);
                 if (passMatch) {
-                    let user = { name: username, admin: result.admin };
+                    let user = { name: username };
                     const accessToken = jwt.sign(user, ACCESS_TOKEN_SECRET);
-                    localStorage.setItem("accessToken", accessToken);
+                    res.session.cookie("access-token", accessToken, {
+                        maxAge: 900000
+                    });
+                    if (result.admin) res.redirect('/adminDashboard')
+                    else res.redirect('/userDashboard');
                 }
                 else res.render('login', data = { error: "Incorrect username or password" });
             }
