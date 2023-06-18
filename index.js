@@ -32,7 +32,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 
-// Hashing utitlities
+// Utilities
 const hashPass = async (password) => {
     const saltRounds = 10;
     const salt = await bcrypt.genSalt(saltRounds);
@@ -45,9 +45,23 @@ const matchPass = async (pass, salt, existingHash) => await bcrypt.hash(pass, sa
 
 const sendErr = (res, code, msg) => res.status(code).json({ error: msg });
 
-const validateJWT = (req, res, next) =>{
+function execSql(query, params) {
+    return new Promise((resolve, reject) => {
+        db.query(query, params, (error, results) => {
+            if (error) {
+                console.error(error);
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+}
+
+
+const validateJWT = (req, res, next) => {
     const token = req.cookies['access-token'];
-    if (token == null) res.redirect('/login');
+    if (token == null) next();
     else {
         jwt.verify(token, ACCESS_TOKEN_SECRET, (err, user) => {
             if (err) sendErr(res, 403, "error during validation");
@@ -55,14 +69,17 @@ const validateJWT = (req, res, next) =>{
             next();
         })
     }
-} 
+}
 
 // Routes
 app.get('/', (req, res) => res.render('home'));
 
 
 app.get('/login', validateJWT, (req, res) => {
-    if (req.user) {res.redirect('/userDashboard');}
+    if (req.user) {
+        if (req.user.admin) res.redirect('/adminDashboard');
+        else res.redirect('/userDashboard');
+    }
     res.render('login', data = { registered: req.query.registered })
 });
 
@@ -70,10 +87,108 @@ app.get('/login', validateJWT, (req, res) => {
 app.get('/register', (req, res) => res.render('register', data = {}));
 
 
-app.get('/userDashboard', validateJWT, (req, res)=>{
-    res.send(req.user.name);
+app.get('/userDashboard/:mode?', validateJWT, async (req, res) => {
+    userID = await execSql(`select id from users where username = ${db.escape(req.user.name)};`);
+    userID = userID[0].id
+    mode = req.params.mode
+
+    if (mode) {
+        if (mode == 'requested') {
+            books = await execSql(`
+                select b.*
+                from books b
+                inner join requests r on b.id = r.book_id
+                where r.status = 'request-issue' and r.user_id = ? and b.quantity>=1;
+            `, [userID]);
+
+            res.render('userDashboard', data = {
+                username: req.user.name,
+                state: mode,
+                books: books
+            })
+
+        } else if (mode == 'issued') {
+            books = await execSql(`
+                select b.*
+                from books b
+                inner join requests r on b.id = r.book_id
+                where r.status = 'issued' and r.user_id = ? and b.quantity>=1;
+            `, [userID]);
+
+            res.render('userDashboard', data = {
+                username: req.user.name,
+                state: mode,
+                books: books
+            })
+
+        } else if (mode == 'to-be-returned') {
+            books = await execSql(`
+                select b.*
+                from books b
+                inner join requests r on b.id = r.book_id
+                where r.status = 'request-return' and r.user_id = ? and b.quantity>=1;
+            `, [userID]);
+
+            res.render('userDashboard', data = {
+                username: req.user.name,
+                state: mode,
+                books: books
+            })
+
+        }
+    }
+    else {
+        books = await execSql(`
+            select b.*
+            from books b
+            left join requests r on b.id = r.book_id
+            and r.user_id = ${db.escape(userID)}
+            where r.id is NULL;
+        `);
+
+        res.render("userDashboard.ejs", data = {
+            username: req.user.name,
+            state: 'available',
+            books: books
+        })
+    }
 })
 
+app.get('/userDashboard/request/:id', validateJWT, async (req, res) => {
+    userID = await execSql(`select id from users where username = ${db.escape(req.user.name)};`);
+    userID = userID[0].id
+    await execSql(`
+        insert into requests(status, book_id, user_id) 
+        values('request-issue', ${db.escape(req.params.id)}, ${userID});
+    `);
+    res.redirect('/userDashboard/requested');
+})
+
+app.get('/userDashboard/req-return/:id', validateJWT, async (req, res) => {
+    userID = await execSql(`select id from users where username = ${db.escape(req.user.name)};`);
+    userID = userID[0].id
+    await execSql(`
+        delete from requests
+        where status='issued' and book_id=${db.escape(req.params.id)} and user_id=${db.escape(userID)}
+    `)
+    await execSql(` 
+        insert into requests(status, book_id, user_id) 
+        values('request-return', ${db.escape(req.params.id)}, ${db.escape(userID)});
+    `);
+    res.redirect('/userDashboard/to-be-returned');
+})
+
+
+
+app.get('/adminDashboard', validateJWT, (req, res) => {
+    res.send(req.user.name + ' admin');
+})
+
+
+app.get('/logout', validateJWT, (req, res) => {
+    res.clearCookie('access-token');
+    res.redirect('/');
+})
 
 app.post('/register', async (req, res) => {
     let { username, password, confirmPassword, adminPasscode } = req.body;
@@ -96,6 +211,7 @@ app.post('/register', async (req, res) => {
                         (err, result) => {
                             if (err) res.json(err);
                             else {
+                                res.clearCookie('access-token');
                                 res.redirect('/login?registered=true')
                             };
                         }
@@ -116,12 +232,12 @@ app.post('/login', async (req, res) => {
             else {
                 let passMatch = await matchPass(password, result[0].salt, result[0].hash);
                 if (passMatch) {
-                    let user = { name: username };
+                    let user = { name: username, admin: result[0].admin };
                     const accessToken = jwt.sign(user, ACCESS_TOKEN_SECRET);
-                    res.session.cookie("access-token", accessToken, {
-                        maxAge: 900000
+                    res.cookie("access-token", accessToken, {
+                        maxAge: 90000000
                     });
-                    if (result.admin) res.redirect('/adminDashboard')
+                    if (user.admin) res.redirect('/adminDashboard');
                     else res.redirect('/userDashboard');
                 }
                 else res.render('login', data = { error: "Incorrect username or password" });
