@@ -88,8 +88,9 @@ app.get('/register', (req, res) => res.render('register', data = {}));
 
 
 app.get('/userDashboard/:mode?', validateJWT, async (req, res) => {
-    userID = await execSql(`select id from users where username = ${db.escape(req.user.name)};`);
-    userID = userID[0].id
+
+    console.log(req.user)
+    userID = req.user.id
     mode = req.params.mode
 
     if (mode) {
@@ -138,6 +139,7 @@ app.get('/userDashboard/:mode?', validateJWT, async (req, res) => {
         }
     }
     else {
+        console.log("userid: ",userID)
         books = await execSql(`
             select b.*
             from books b
@@ -155,8 +157,8 @@ app.get('/userDashboard/:mode?', validateJWT, async (req, res) => {
 })
 
 app.get('/userDashboard/request/:id', validateJWT, async (req, res) => {
-    userID = await execSql(`select id from users where username = ${db.escape(req.user.name)};`);
-    userID = userID[0].id
+
+    let userID = req.user.id
     await execSql(`
         insert into requests(status, book_id, user_id) 
         values('request-issue', ${db.escape(req.params.id)}, ${userID});
@@ -165,8 +167,8 @@ app.get('/userDashboard/request/:id', validateJWT, async (req, res) => {
 })
 
 app.get('/userDashboard/req-return/:id', validateJWT, async (req, res) => {
-    userID = await execSql(`select id from users where username = ${db.escape(req.user.name)};`);
-    userID = userID[0].id
+
+    let userID = req.user.id
     await execSql(`
         delete from requests
         where status='issued' and book_id=${db.escape(req.params.id)} and user_id=${db.escape(userID)}
@@ -180,8 +182,50 @@ app.get('/userDashboard/req-return/:id', validateJWT, async (req, res) => {
 
 
 
-app.get('/adminDashboard', validateJWT, (req, res) => {
-    res.send(req.user.name + ' admin');
+app.get('/adminDashboard', validateJWT, async (req, res) => {
+
+    if (req.query) {
+        if (req.query.addedQty) {
+            let { id, addedQty } = req.query;
+            await execSql(`
+                update books 
+                set quantity = quantity + ${db.escape(addedQty)}
+                where id = ${db.escape(id)} 
+            `)
+        } if (req.query.rmQty) {
+            console.log("decr")
+            let { id, rmQty } = req.query;
+            await execSql(`
+                update books 
+                set quantity = quantity - ${db.escape(rmQty)}
+                where id = ${db.escape(id)} 
+            `)
+        }
+    }
+    books = await execSql(`select * from books where quantity>=1;`);
+    data = {
+        username: req.user.name,
+        state: 'all',
+        books: books
+    };
+
+    if (req.query.duplicateBookEntry) data.error = 'duplicateBookEntry';
+
+    res.render('adminDashboard', data)
+});
+
+app.post('/adminDashboard', validateJWT, async (req, res) => {
+    let { bookName, bookQty } = req.body;
+    console.log(bookName)
+    let results = await execSql(`select * from books where book_name = ${db.escape(bookName)}`);
+    if(results.length===0){
+        await execSql(`
+            insert into books (book_name, quantity) values (${db.escape(bookName)}, ${db.escape(bookQty)})
+        `)
+        res.redirect('/adminDashboard')
+    } else{
+        res.redirect('/adminDashboard?duplicateBookEntry=true')
+    }
 })
 
 
@@ -232,7 +276,7 @@ app.post('/login', async (req, res) => {
             else {
                 let passMatch = await matchPass(password, result[0].salt, result[0].hash);
                 if (passMatch) {
-                    let user = { name: username, admin: result[0].admin };
+                    let user = {id: result[0].id, name: username, admin: result[0].admin };
                     const accessToken = jwt.sign(user, ACCESS_TOKEN_SECRET);
                     res.cookie("access-token", accessToken, {
                         maxAge: 90000000
