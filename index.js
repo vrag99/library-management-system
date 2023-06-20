@@ -9,7 +9,6 @@ const bodyParser = require('body-parser');
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 var cookieParser = require('cookie-parser');
-const { Console } = require('console');
 
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASS = process.env.ADMIN_PASS;
@@ -32,8 +31,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cookieParser());
 
-
-var loggedin = false;
 
 // Utilities
 const hashPass = async (password) => {
@@ -61,7 +58,6 @@ function execSql(query, params) {
     });
 }
 
-
 const validateJWT = (req, res, next) => {
     const token = req.cookies['access-token'];
     if (token == null) res.redirect('/login');
@@ -73,6 +69,7 @@ const validateJWT = (req, res, next) => {
         })
     }
 }
+
 
 // Routes
 app.get('/', (req, res) => res.render('home'));
@@ -93,13 +90,11 @@ app.get('/login', (req, res) => {
     res.render('login', data = { registered: req.query.registered })
 });
 
-
 app.get('/register', (req, res) => res.render('register', data = {}));
 
 
 // UserDashboard
 app.get('/userDashboard/:mode?', validateJWT, async (req, res) => {
-
     userID = req.user.id
     mode = req.params.mode
 
@@ -166,7 +161,6 @@ app.get('/userDashboard/:mode?', validateJWT, async (req, res) => {
 })
 
 app.get('/userDashboard/request/:id', validateJWT, async (req, res) => {
-
     let userID = req.user.id
     await execSql(`
         insert into requests(status, book_id, user_id) 
@@ -176,7 +170,6 @@ app.get('/userDashboard/request/:id', validateJWT, async (req, res) => {
 })
 
 app.get('/userDashboard/req-return/:id', validateJWT, async (req, res) => {
-
     let userID = req.user.id
     await execSql(`
         delete from requests
@@ -191,9 +184,8 @@ app.get('/userDashboard/req-return/:id', validateJWT, async (req, res) => {
 
 // AdminDashboard
 app.get('/adminDashboard', validateJWT, async (req, res) => {
-    console.log(Object.keys(req.query).length)
-
     if (Object.keys(req.query).length != 0) {
+
         if (req.query.addedQty) {
             let { id, addedQty } = req.query;
             await execSql(`
@@ -215,12 +207,10 @@ app.get('/adminDashboard', validateJWT, async (req, res) => {
             `)
             res.status(200).send("removed")
             } else {
-                console.log(qty - requests >= rmQty)
                 res.status(400).send("damn it")
             }
         }
     } else {
-        console.log('abcd')
         books = await execSql(`select * from books where quantity>=1;`);
         data = {
             username: req.user.name,

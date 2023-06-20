@@ -145,7 +145,7 @@
               class="btn btn-dark btn-sm"
               id="<%= (data.books[i].id) %>"
               value="<%= (data.books[i].quantity) %>"
-              data-available-qty = "<%= (data.books[i].available_qty) %>"
+              data-available = "<%= (data.books[i].available_qty) %>"
               onclick="removeBook(this)"
             >
               <i class="bi bi-dash-lg"></i>
@@ -240,6 +240,7 @@
             },
           })
           .then(async (res) => {
+            
             await Swal.fire({
                   title: "Added Successfully!",
                   icon: "success",
@@ -252,11 +253,13 @@
     }
 
     async function removeBook(btn) {
-      var rmQty = prompt("Enter the no. of books to remove");
+      var rmQty = parseInt(prompt("Enter the no. of books to remove"));
       if (rmQty < 0) {
         alert("No. of books must be positive");
-      } else if (btn['data-available-qty']-rmQty < 0){
+      } else if (btn.dataset.available<rmQty){
         alert("Can't remove more books than they exist.")
+      } else if (isNaN(rmQty)){
+        window.location.reload();
       }
       else {
         await axios
@@ -267,25 +270,22 @@
             },
           })
           .then(async (res) => {
-
             await Swal.fire({
                   title: "Removed Successfully!",
                   icon: "success",
                   showConfirmButton: false,
                   timer: 1000,
               });
-
-
             }).catch(async (err)=>{
               await Swal.fire({
-                    title: "Pending req",
+                    title: "Clear pending requests first",
                     icon: "error",
                     showConfirmButton: false,
-                    timer: 1000,
+                    timer: 1000
                 });
-
+ 
           })
-          window.location.reload();
+        window.location.reload();
       }
     }
 
