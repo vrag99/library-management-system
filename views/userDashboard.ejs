@@ -93,7 +93,7 @@
         <% for( let i=0; i < data.books.length; i++ ) { %>
         <tr>
           <td><%= (data.books[i].book_name) %></td>
-          <td><%= (data.books[i].quantity) %></td>
+          <td><%= (data.books[i].available_qty) %></td>
           <td>
             <a
               href="/userDashboard/request/<%= (data.books[i].id) %>"

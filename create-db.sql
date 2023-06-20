@@ -13,7 +13,8 @@ CREATE TABLE `users` (
 CREATE TABLE `books` (
     `id` int NOT NULL PRIMARY KEY AUTO_INCREMENT,
     `book_name` varchar(255) NOT NULL,
-    `quantity` int NOT NULL DEFAULT 1
+    `quantity` int NOT NULL DEFAULT 1,
+    `available_qty` int NOT NULL DEFAULT 1
 );
 
 CREATE TABLE `requests` (

@@ -24,31 +24,31 @@
             </a>
           </li>
           <% if (data.state=='all' ) { %>
-            <li class="breadcrumb-item active">
-              <a
-                class="link-body-emphasis fw-semibold text-decoration-none"
-                href="/adminDashboard"
-                >all books</a
-              >
-            </li>
-            <% } else if (data.state=='issue-req' ) { %>
-            <li class="breadcrumb-item active">
-              <a
-                class="link-body-emphasis fw-semibold text-decoration-none"
-                href="/adminDashboard/issue-requests"
-                >requested books</a
-              >
-            </li>
-  
-            <% } else if (data.state=='return-requests' ) { %>
-            <li class="breadcrumb-item active">
-              <a
-                class="link-body-emphasis fw-semibold text-decoration-none"
-                href="/adminDashboard/return-requests"
-                >to-be-returned books</a
-              >
-            </li>
-            <% } %>
+          <li class="breadcrumb-item active">
+            <a
+              class="link-body-emphasis fw-semibold text-decoration-none"
+              href="/adminDashboard"
+              >all books</a
+            >
+          </li>
+          <% } else if (data.state=='issue-req' ) { %>
+          <li class="breadcrumb-item active">
+            <a
+              class="link-body-emphasis fw-semibold text-decoration-none"
+              href="/adminDashboard/issue-requests"
+              >requested books</a
+            >
+          </li>
+
+          <% } else if (data.state=='return-requests' ) { %>
+          <li class="breadcrumb-item active">
+            <a
+              class="link-body-emphasis fw-semibold text-decoration-none"
+              href="/adminDashboard/return-requests"
+              >to-be-returned books</a
+            >
+          </li>
+          <% } %>
 
           <li class="ms-auto">
             <a href="/logout" class="btn btn-dark btn-sm">Logout</a>
@@ -79,26 +79,42 @@
       </form>
     </div>
 
+    <% if (data.state=='all') { %>
     <div class="container mt-4 mb-5">
-        <form method="post" class="bg-body-tertiary p-3 rounded-3">
-            <h2 class="text-center pb-3"> Add new book </h2>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <input type="text" class="form-control" id="bookName" name="bookName" placeholder="Name of the book" required />
-                </div>
-                <div class="col-md-6">
-                    <input type="text" class="form-control" id="bookQty" name="bookQty" placeholder="Quantity" required />
-                </div>
-            </div>
-            <div class="row">
-                <div class="col"></div>
-                <div class="col d-grid">
-                    <button type="submit" class="btn btn-dark">Add</button>
-                </div>
-                <div class="col"></div>
-            </div>
-          </form>
+      <form method="post" class="bg-body-tertiary p-3 rounded-3">
+        <h2 class="text-center pb-3">Add new book</h2>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <input
+              type="text"
+              class="form-control"
+              id="bookName"
+              name="bookName"
+              placeholder="Name of the book"
+              required
+            />
+          </div>
+          <div class="col-md-6">
+            <input
+              type="text"
+              class="form-control"
+              id="bookQty"
+              name="bookQty"
+              placeholder="Quantity"
+              required
+            />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col"></div>
+          <div class="col d-grid">
+            <button type="submit" class="btn btn-dark">Add</button>
+          </div>
+          <div class="col"></div>
+        </div>
+      </form>
     </div>
+    <% } %>
 
     <div class="container mt-4">
       <h2 class="text-center mt-4 mb-3 fw-bold text-uppercase">
@@ -109,12 +125,14 @@
         <thead>
           <th>Book Name</th>
           <th>Total Quantity</th>
+          <th>Available Quantity</th>
           <th>Actions</th>
         </thead>
         <% for( let i=0; i < data.books.length; i++ ) { %>
         <tr>
           <td><%= (data.books[i].book_name) %></td>
           <td><%= (data.books[i].quantity) %></td>
+          <td><%= (data.books[i].available_qty) %></td>
           <td>
             <button
               class="btn btn-dark btn-sm"
@@ -127,6 +145,7 @@
               class="btn btn-dark btn-sm"
               id="<%= (data.books[i].id) %>"
               value="<%= (data.books[i].quantity) %>"
+              data-available-qty = "<%= (data.books[i].available_qty) %>"
               onclick="removeBook(this)"
             >
               <i class="bi bi-dash-lg"></i>
@@ -136,16 +155,64 @@
         <% } %>
       </table>
 
-      <% } else if (data.state=='requested' ) { %>
+      <% } else if (data.state=='issue-req') { %>
       <table class="table text-center table-hover align-middle">
         <thead>
-          <th>Book ID</th>
-          <th>Book Name</th>
+          <th>Request ID</th>
+          <th>Username</th>
+          <th>Book</th>
+          <th>Accept/Reject</th>
         </thead>
-        <% for( let i=0; i < data.books.length; i++ ) { %>
+        <% for( let i=0; i < data.req.length; i++ ) { %>
         <tr>
-          <td><%= (data.books[i].id) %></td>
-          <td><%= (data.books[i].book_name) %></td>
+          <td><%= (data.req[i].id) %></td>
+          <td><%= (data.req[i].username) %></td>
+          <td><%= (data.req[i].book_name) %></td>
+          <td>
+            <a
+              href="/adminDashboard/issue-requests/accept/<%= (data.req[i].id) %>"
+              class="btn btn-dark btn-sm"
+            >
+              <i class="bi bi-check2"></i>
+            </a>
+            <a
+              href="/adminDashboard/issue-requests/reject/<%= (data.req[i].id) %>"
+              class="btn btn-dark btn-sm"
+            >
+              <i class="bi bi-x-lg"></i>
+            </a>
+          </td>
+        </tr>
+        <% } %>
+      </table>
+
+      <% } else if (data.state=='return-req') { %>
+      <table class="table text-center table-hover align-middle">
+        <thead>
+          <th>Request ID</th>
+          <th>Username</th>
+          <th>Book</th>
+          <th>Accept/Reject</th>
+        </thead>
+        <% for( let i=0; i < data.req.length; i++ ) { %>
+        <tr>
+          <td><%= (data.req[i].id) %></td>
+          <td><%= (data.req[i].username) %></td>
+          <td><%= (data.req[i].book_name) %></td>
+          <td>
+            <a
+              href="/adminDashboard/return-requests/accept/<%= (data.req[i].id) %>"
+              class="btn btn-dark btn-sm"
+            >
+              <i class="bi bi-check2"></i>
+            </a>
+            <a
+              href="/adminDashboard/return-requests/reject/<%= (data.req[i].id) %>"
+              class="btn btn-dark btn-sm"
+            >
+              <i class="bi bi-x-lg"></i>
+            </a>
+          </td>
         </tr>
         <% } %>
       </table>
@@ -172,7 +239,13 @@
               addedQty: addedQty,
             },
           })
-          .then((res) => {
+          .then(async (res) => {
+            await Swal.fire({
+                  title: "Added Successfully!",
+                  icon: "success",
+                  showConfirmButton: false,
+                  timer: 1000,
+              });
             window.location.reload();
           });
       }
@@ -182,7 +255,7 @@
       var rmQty = prompt("Enter the no. of books to remove");
       if (rmQty < 0) {
         alert("No. of books must be positive");
-      } else if (btn.value-rmQty < 0){
+      } else if (btn['data-available-qty']-rmQty < 0){
         alert("Can't remove more books than they exist.")
       }
       else {
@@ -193,11 +266,35 @@
               rmQty: rmQty,
             },
           })
-          .then((res) => {
-            window.location.reload();
-          });
+          .then(async (res) => {
+
+            await Swal.fire({
+                  title: "Removed Successfully!",
+                  icon: "success",
+                  showConfirmButton: false,
+                  timer: 1000,
+              });
+
+
+            }).catch(async (err)=>{
+              await Swal.fire({
+                    title: "Pending req",
+                    icon: "error",
+                    showConfirmButton: false,
+                    timer: 1000,
+                });
+
+          })
+          window.location.reload();
       }
     }
+
+    var viewMode = document.getElementById('viewMode');
+    viewMode.addEventListener('change', ()=>{
+        var mode = viewMode.value;
+        if(mode!='all') goTo(`/adminDashboard/${mode}`);
+        else goTo('/adminDashboard');
+    })
 
     <% if (data.error == 'duplicateBookEntry') { %>
         Swal.fire({
